@@ -4,9 +4,6 @@
 //
 //  Created by Dorian Benbassat on 2026/7/14.
 //
-//  Standalone — not connected to the rest of the app.
-//  View in preview only.
-//
 
 import SwiftUI
 
@@ -14,9 +11,11 @@ struct NewAboutView: View {
 
 //    @Binding var showSettings: Bool
     @Environment(\.dismiss) private var dismiss
-    @State private var minimalMode: Bool = false
+    @AppStorage("minimalMode") private var minimalMode: Bool = true
+    @State private var privacyWordIndex: Int = 0
+    private let privacyWords = ["TRANSMIT", "COLLECT", "STORE"]
     
-    var selectedColor: Color = .black
+    var selectedColor: Color = .white
     
     private var greyColor: Color {
         selectedColor.isdark ? Color.black : Color.white
@@ -73,7 +72,7 @@ struct NewAboutView: View {
                             Text("V1.0")
                         }.foregroundStyle(orangeColor)
 
-                        // ADDING COLORFULL BORDERS TO
+                        // ADDING COLORFULL ASYMMETRICAL TO
                         row {
                             Text("ADDS")
                             Spacer()
@@ -112,7 +111,7 @@ struct NewAboutView: View {
                                 .padding(.horizontal, 7)
                             
                         }
-                        .padding(.vertical, -3)
+                        .padding(.vertical, -5)
 
                         // CONTACT             DEVELOPER
                         Button { openMail() } label: {
@@ -225,13 +224,23 @@ struct NewAboutView: View {
                         
                         // DOES NOT COLLECT, STORE, OR
                         row {
-                            Text("TRANSMIT")
+                            Text(privacyWords[privacyWordIndex])
+                                .id(privacyWordIndex)
+                                .transition(.opacity)
                             Spacer()
-                            Text("ANY")
+                            Text("PERSONAL")
                             Spacer()
                             Text("DATA")
                         }
                         .foregroundStyle(greyColor.opacity(0.5))
+                        .task {
+                            while !Task.isCancelled {
+                                try? await Task.sleep(for: .seconds(2))
+                                withAnimation(.easeInOut(duration: 0.5)) {
+                                    privacyWordIndex = (privacyWordIndex + 1) % privacyWords.count
+                                }
+                            }
+                        }
 
                     }
                     .preferredColorScheme(selectedColor.isdark ? .light : .dark)

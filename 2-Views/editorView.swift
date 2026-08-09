@@ -15,7 +15,7 @@ struct EditorView: View {
     @Binding var selectedUIImage: UIImage?
     @Binding var batchImages: [UIImage]
     @Binding var selectedColor: Color
-    @State private var borderSize: Float = 20
+    @Binding var borderSize: Float
     @State private var isBorderSizeOverlayVisible = false
     @State private var borderSizeOverlayGeneration = 0
     @State private var selectedDoubleBorderLayer: DoubleBorderLayer = .outer
@@ -26,6 +26,10 @@ struct EditorView: View {
     @State private var overlayText: String = ""
     
     @State private var selectedAspectRatio = AspectRatioOption.original
+    @State private var isCustomAspectRatioOverlayVisible = false
+    @State private var customAspectRatioWidth = 4
+    @State private var customAspectRatioHeight = 3
+    @State private var customAspectRatioOverlayOffset = CGSize.zero
     @FocusState private var isInputFocused: Bool
     
     let image: UIImage
@@ -42,6 +46,9 @@ struct EditorView: View {
                     selectedUIImage: $selectedUIImage,
                     batchImages: $batchImages,
                     selectedAspectRatio: $selectedAspectRatio,
+                    isCustomAspectRatioOverlayVisible: $isCustomAspectRatioOverlayVisible,
+                    customAspectRatioWidth: $customAspectRatioWidth,
+                    customAspectRatioHeight: $customAspectRatioHeight,
                     selectedColor: activeControlColor,
                     borderSize: borderSize,
                     doubleOuterColor: selectedColor,
@@ -149,6 +156,30 @@ struct EditorView: View {
             .onTapGesture {
                 isInputFocused = false
             }
+            .overlay(alignment: .top) {
+                if isCustomAspectRatioOverlayVisible {
+                    CustomAspectRatioOverlay(
+                        width: $customAspectRatioWidth,
+                        height: $customAspectRatioHeight,
+                        dragOffset: $customAspectRatioOverlayOffset,
+                        selectedColor: activeControlColor,
+                        onDismiss: {
+                            withAnimation(.easeInOut(duration: 0.18)) {
+                                isCustomAspectRatioOverlayVisible = false
+                            }
+                        }
+                    )
+                    .padding(.top, 86)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                    .zIndex(1)
+                }
+            }
+            .onChange(of: customAspectRatioWidth) { _, _ in
+                updateCustomAspectRatioSelection()
+            }
+            .onChange(of: customAspectRatioHeight) { _, _ in
+                updateCustomAspectRatioSelection()
+            }
         }
     
     private var previewAspectRatio: CGFloat {
@@ -239,5 +270,13 @@ struct EditorView: View {
                 }
             }
         }
+    }
+    
+    private func updateCustomAspectRatioSelection() {
+        guard selectedAspectRatio.isCustom else { return }
+        selectedAspectRatio = AspectRatioOption.custom(
+            width: customAspectRatioWidth,
+            height: customAspectRatioHeight
+        )
     }
 }

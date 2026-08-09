@@ -4,6 +4,7 @@
 //
 //  Created by Dorian Benbassat on 2026/4/26.
 //
+// TODO: VIDEO MODE / CRASHLYTICS / APP ICONS / CUSTOM MODE
 
 import SwiftUI
 import PhotosUI
@@ -19,6 +20,7 @@ struct RenderedExportImage: Identifiable {
 
 struct ContentView: View {
     @Environment(\.requestReview) var requestReview
+    @AppStorage("minimalMode") private var minimalMode: Bool = false
     @State private var selectedUIImage: UIImage?
     @State private var pendingReviewPrompt = false
     @State private var selectedItem: PhotosPickerItem?
@@ -27,6 +29,7 @@ struct ContentView: View {
     @State private var selectedVideoURL: URL? // New: for video selection
     @State private var isVideoMode: Bool = false // New: track video mode
     @State private var selectedColor: Color = .white
+    @AppStorage("borderSize") private var borderSize: Double = 85
     @State var renderedImage: UIImage?
     @State private var renderedImageQueue: [UIImage] = []
     @State private var renderedImageGeneration = 0
@@ -70,6 +73,7 @@ struct ContentView: View {
                         selectedUIImage: $selectedUIImage,
                         batchImages: $batchImages,
                         selectedColor: $selectedColor,
+                        borderSize: borderSizeBinding,
                         image: image,
                         onRenderedImage: showRenderedImage,
                         onBatchExportComplete: finishBatchExportAnimation
@@ -94,6 +98,7 @@ struct ContentView: View {
                         selectedUIImage: $selectedUIImage,
                         batchImages: $batchImages,
                         selectedColor: $selectedColor,
+                        borderSize: borderSizeBinding,
                         image: batchImages[0],
                         isBatchMode: true,
                         onRenderedImage: showRenderedImage,
@@ -123,6 +128,8 @@ struct ContentView: View {
             .animation(.easeInOut(duration: 0.26), value: selectedVideoURL != nil)
             .animation(.easeInOut(duration: 0.26), value: isVideoMode)
         }
+        .statusBarHidden(minimalMode)
+        .animation(.easeInOut(duration: 0.2), value: minimalMode)
         .opacity(opacity)
         .onAppear {
             withAnimation(.easeIn(duration: 0.6)) {
@@ -137,7 +144,7 @@ struct ContentView: View {
                 let isImage = try? await newValue.loadTransferable(type: Data.self) != nil
                 let isVideo = try? await newValue.loadTransferable(type: URL.self) != nil
 
-                if isImage! {
+                if isImage == true {
                     // Handle image selection
                     // Reset video mode when selecting image
                     isVideoMode = false
@@ -152,7 +159,7 @@ struct ContentView: View {
                             }
                         }
                     }
-                } else if isVideo! {
+                } else if isVideo == true {
                     // Handle video selection
                     // Reset image mode when selecting video
                     isVideoMode = true
@@ -330,6 +337,13 @@ struct ContentView: View {
         }
 
         pendingReviewPrompt = false
+    }
+
+    private var borderSizeBinding: Binding<Float> {
+        Binding(
+            get: { Float(borderSize) },
+            set: { borderSize = Double($0) }
+        )
     }
 }
 

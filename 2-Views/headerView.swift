@@ -23,6 +23,10 @@ struct AspectRatioOption: Identifiable, Equatable {
     var isDouble: Bool {
         id == "double"
     }
+
+    var isCustom: Bool {
+        id == "custom"
+    }
     
     static let original = AspectRatioOption(
         id: "original",
@@ -30,6 +34,15 @@ struct AspectRatioOption: Identifiable, Equatable {
         symbolName: "photo",
         ratio: nil
     )
+
+    static func custom(width: Int, height: Int) -> AspectRatioOption {
+        AspectRatioOption(
+            id: "custom",
+            title: "\(width):\(height)",
+            symbolName: "slider.horizontal.below.rectangle",
+            ratio: CGFloat(width) / CGFloat(height)
+        )
+    }
     
     static let all: [AspectRatioOption] = [
         .original,
@@ -37,7 +50,8 @@ struct AspectRatioOption: Identifiable, Equatable {
         AspectRatioOption(id: "square", title: "SQUARE", symbolName: "square", ratio: 1),
         AspectRatioOption(id: "asymmetrical", title: "ASYMMETRICAL", symbolName: "skew", ratio: nil),
         AspectRatioOption(id: "double", title: "DOUBLE", symbolName: "inset.filled.square.dashed", ratio: nil),
-        AspectRatioOption(id: "story", title: "STORY", symbolName: "rectangle.portrait", ratio: 9 / 16)
+        AspectRatioOption(id: "story", title: "STORY", symbolName: "rectangle.portrait", ratio: 9 / 16),
+        AspectRatioOption(id: "a4", title: "A4", symbolName: "doc", ratio: 210 / 297)
     ]
     
     static let standard: [AspectRatioOption] = [
@@ -46,7 +60,8 @@ struct AspectRatioOption: Identifiable, Equatable {
         AspectRatioOption(id: "three-two", title: "3:2", symbolName: "rectangle", ratio: 3 / 2),
         AspectRatioOption(id: "two-three", title: "2:3", symbolName: "rectangle.portrait", ratio: 2 / 3),
         AspectRatioOption(id: "four-five", title: "5:4", symbolName: "rectangle.portrait", ratio: 5 / 4),
-        AspectRatioOption(id: "sixteen-nine", title: "16:9", symbolName: "rectangle", ratio: 16 / 9)
+        AspectRatioOption(id: "sixteen-nine", title: "16:9", symbolName: "rectangle", ratio: 16 / 9),
+//        AspectRatioOption(id: "custom", title: "CUSTOM", symbolName: "slider.horizontal.below.rectangle", ratio: 4 / 3)
     ]
 }
 
@@ -61,6 +76,9 @@ struct HeaderView: View {
     @Binding var selectedUIImage: UIImage?
     @Binding var batchImages: [UIImage]
     @Binding var selectedAspectRatio: AspectRatioOption
+    @Binding var isCustomAspectRatioOverlayVisible: Bool
+    @Binding var customAspectRatioWidth: Int
+    @Binding var customAspectRatioHeight: Int
 
     @Environment(\.requestReview) var requestReview
 
@@ -196,18 +214,30 @@ struct HeaderView: View {
         ForEach(options) { option in
             Button {
                 withAnimation(.easeInOut(duration: 0.18)) {
-                    selectedAspectRatio = option
+                    if option.isCustom {
+                        selectedAspectRatio = AspectRatioOption.custom(
+                            width: customAspectRatioWidth,
+                            height: customAspectRatioHeight
+                        )
+                        isCustomAspectRatioOverlayVisible.toggle()
+                    } else {
+                        selectedAspectRatio = option
+                        isCustomAspectRatioOverlayVisible = false
+                    }
                 }
             } label: {
-                Label(option.title, systemImage: option.symbolName)
+                let isSelected = selectedAspectRatio.id == option.id
+                let title = option.isCustom && isSelected ? selectedAspectRatio.title : option.title
+
+                Label(title, systemImage: option.symbolName)
                     .font(.caption)
                     .fontWeight(.bold)
                     .monospaced()
                     .frame(height: 18)
-                    .foregroundStyle(selectedAspectRatio == option ? selectedColor : .secondary)
+                    .foregroundStyle(isSelected ? selectedColor : .secondary)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 10)
-                    .background(.secondary.opacity(selectedAspectRatio == option ? 0.20 : 0.12))
+                    .background(.secondary.opacity(isSelected ? 0.20 : 0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -360,6 +390,91 @@ struct HeaderView: View {
     private func incrementExportCount() {
         let currentCount = UserDefaults.standard.integer(forKey: "successful_exports_count")
         UserDefaults.standard.set(currentCount + 1, forKey: "successful_exports_count")
+    }
+}
+
+struct CustomAspectRatioOverlay: View {
+    @Binding var width: Int
+    @Binding var height: Int
+    @Binding var dragOffset: CGSize
+    @GestureState private var dragTranslation = CGSize.zero
+
+    let selectedColor: Color
+    let onDismiss: () -> Void
+
+    private let numberRange = Array(1...30)
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text("CUSTOM")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .monospaced()
+                    .foregroundStyle(selectedColor)
+
+                Spacer()
+
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .contentShape(Rectangle())
+            .gesture(dragGesture)
+
+            HStack(spacing: 14) {
+                numberPicker(selection: $width)
+
+                RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                    .fill(.secondary.opacity(0.55))
+                    .frame(width: 2, height: 88)
+
+                numberPicker(selection: $height)
+            }
+            .frame(height: 118)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(.secondary.opacity(0.18), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.14), radius: 18, x: 0, y: 10)
+        .frame(maxWidth: 260)
+        .offset(
+            x: dragOffset.width + dragTranslation.width,
+            y: dragOffset.height + dragTranslation.height
+        )
+    }
+
+    private func numberPicker(selection: Binding<Int>) -> some View {
+        Picker("", selection: selection) {
+            ForEach(numberRange, id: \.self) { number in
+                Text("\(number)")
+                    .font(.system(size: 28, weight: .black, design: .monospaced))
+                    .tag(number)
+            }
+        }
+        .pickerStyle(.wheel)
+        .labelsHidden()
+        .frame(width: 82, height: 118)
+        .clipped()
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture(coordinateSpace: .global)
+            .updating($dragTranslation) { value, state, _ in
+                state = value.translation
+            }
+            .onEnded { value in
+                dragOffset.width += value.translation.width
+                dragOffset.height += value.translation.height
+            }
     }
 }
 

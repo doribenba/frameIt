@@ -142,35 +142,22 @@ struct SplashView: View {
                     .ignoresSafeArea()
                     .animation(.easeInOut(duration: 0.3), value: selectedColor)
                 
-                VStack() {
+                VStack(alignment: .trailing) {
                     
-//                    Spacer()
-//                    
-//                    PhotosPicker(selection: $selectedItem, matching: .images) {
-//                        Label("FRAME IMAGE", systemImage: "photo")
-//                            .fontWeight(.bold)
-//                            .tint(greyColor)
-//                    }
-//                    
-//                    PhotosPicker(selection: $selectedBatchItems, maxSelectionCount: 10, matching: .images) {
-//                        Label("BATCH SELECT", systemImage: "photo.on.rectangle.angled")
-//                            .fontWeight(.bold)
-//                            .tint(greyColor)
-//                    }
-//                    
-//                    Button {
-//                        showSettings = true
-//                    } label: {
-//                        Image(systemName: "gear")
-//                            .tint(greyColor)
-//                            .font(.system(size: 16, weight: .bold))
-//                        Text("MORE")
-//                            .fontWeight(.bold)
-//                            .tint(greyColor)
-//                    }
-//                    
-//                    Spacer()
-//                    Spacer()
+                    Spacer()
+                    Spacer()
+                    
+                    HStack{
+                        Spacer()
+                        PhotosPicker(selection: $selectedBatchItems, maxSelectionCount: 10, matching: .images) {
+                            Label("BATCH", systemImage: "photo.on.rectangle.angled")
+                                .fontWeight(.bold)
+                                .tint(greyColor)
+                        }
+                    }
+                    .padding(.bottom, 70)
+                    
+                    Spacer()
                     
                     HStack{
                         PhotosPicker(selection: $selectedItem, matching: .images) {
@@ -178,43 +165,80 @@ struct SplashView: View {
                                 .fontWeight(.bold)
                                 .tint(greyColor)
                         }
-                        
-                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                            .fill(.secondary.opacity(1))
-                            .frame(width: 2, height: 18)
-                            .padding(.horizontal, 3)
-                        
-                        PhotosPicker(selection: $selectedBatchItems, maxSelectionCount: 10, matching: .images) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .tint(greyColor)
-                                .font(.system(size: 16, weight: .bold))
-                        }
-                        
-                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                            .fill(.secondary.opacity(1))
-                            .frame(width: 2, height: 18)
-                            .padding(.horizontal, 3)
-                        
+                        Spacer()
+                    }
+                    
+                    HStack{
+                        Spacer()
                         Button {
                             showSettings = true
                         } label: {
+                            Text("SETTINGS")
+                                .fontWeight(.bold)
+                                .tint(greyColor)
                             Image(systemName: "gear")
                                 .tint(greyColor)
                                 .font(.system(size: 16, weight: .bold))
                         }
                     }
-                    .tint(.black)
-                    .monospaced()
-                    .preferredColorScheme(selectedColor.isdark ? .light : .dark)
+                    .padding(.top, 14)
+                
+                    Spacer()
+                    HStack{
+                        Image(systemName: "chevron.left.forwardslash.chevron.right")
+                            .tint(greyColor)
+                            .font(.system(size: 16, weight: .bold))
+                            .opacity(0.5)
+                        Text("DORIAN B. 2026")
+                            .fontWeight(.bold)
+                            .tint(greyColor)
+                            .opacity(0.5)
+                        Spacer()
+                    }
+                    Spacer()
+                    
+//                    HStack{
+//                        PhotosPicker(selection: $selectedItem, matching: .images) {
+//                            Label("<- FRAME IT", systemImage: "photo")
+//                                .fontWeight(.bold)
+//                                .tint(greyColor)
+//                        }
+//                        
+//                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+//                            .fill(.secondary.opacity(1))
+//                            .frame(width: 2, height: 18)
+//                            .padding(.horizontal, 3)
+//                        
+//                        PhotosPicker(selection: $selectedBatchItems, maxSelectionCount: 10, matching: .images) {
+//                            Image(systemName: "photo.on.rectangle.angled")
+//                                .tint(greyColor)
+//                                .font(.system(size: 16, weight: .bold))
+//                        }
+//                        
+//                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+//                            .fill(.secondary.opacity(1))
+//                            .frame(width: 2, height: 18)
+//                            .padding(.horizontal, 3)
+//                        
+//                        Button {
+//                            showSettings = true
+//                        } label: {
+//                            Image(systemName: "gear")
+//                                .tint(greyColor)
+//                                .font(.system(size: 16, weight: .bold))
+//                        }
+//                    }
+//                    .tint(.black)
+//                    .monospaced()
+//                    .preferredColorScheme(selectedColor.isdark ? .light : .dark)
+                    
                 }
+                .padding(.horizontal, 80)
                 .tint(.black)
                 .monospaced()
                 .preferredColorScheme(selectedColor.isdark ? .light : .dark)
                 .ignoresSafeArea()
-//                if showSettings {
-//                    NewAboutView(showSettings: $showSettings, selectedColor: selectedColor)
-//                        .transition(.opacity)
-//                }
+
             }
             .sheet(isPresented: $showSettings) {
                 NewAboutView(selectedColor: selectedColor)
